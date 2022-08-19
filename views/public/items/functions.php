@@ -4,13 +4,15 @@ function sb_get_subjects(){
 	if($records = get_records('ElementText',array('element_id'=>'49'),'all')){
 		foreach($records as $r){
 			$TEXT=trim($r->text);
-			$subjects[] = array(
-				'text' => $TEXT,
-				'letter' => strtolower(substr($r->text, 0, 1)),
-				'count' => count(array_filter($records, function ($element) use($TEXT){ 
-					return $element['text'] == $TEXT; 
-				})), // @todo
-			);
+			if(strlen($TEXT) > 0){
+				$subjects[] = array(
+					'text' => $TEXT,
+					'letter' => strtolower(substr($r->text, 0, 1)),
+					'count' => count(array_filter($records, function ($element) use($TEXT){ 
+						return $element['text'] == $TEXT; 
+					})), 
+				);
+			}
 		}
 		$subjects = array_unique($subjects, SORT_REGULAR); // unique
 	}
