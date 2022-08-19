@@ -1,4 +1,5 @@
 <?php
+// @TODO: will switch to SQL query in order to ensure we're only looking at terms for Public Items
 function sb_get_subjects(){
 	$subjects = [];
 	if($records = get_records('ElementText',array('element_id'=>'49'),'all')){
