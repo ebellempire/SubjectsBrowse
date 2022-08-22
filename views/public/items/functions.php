@@ -1,22 +1,18 @@
 <?php
-// @TODO: will switch to SQL query in order to ensure we're only looking at terms for Public Items
 function sb_get_subjects(){
-	$subjects = [];
-	if($records = get_records('ElementText',array('element_id'=>'49'),'all')){
-		foreach($records as $r){
-			$TEXT=trim($r->text);
-			if(strlen($TEXT) > 0){
-				$subjects[] = array(
-					'text' => $TEXT,
-					'letter' => strtolower(substr($r->text, 0, 1)),
-					'count' => count(array_filter($records, function ($element) use($TEXT){ 
-						return $element['text'] == $TEXT; 
-					})), 
-				);
-			}
-		}
-		$subjects = array_unique($subjects, SORT_REGULAR); // unique
-	}
+	$db = get_db();
+	$prefix=$db->prefix;
+	$select = "
+	SELECT TRIM(et.text) as text, count(*) as total, LOWER(LEFT(text, 1)) as letter
+	FROM {$prefix}items as i
+	INNER JOIN {$prefix}element_texts as et ON i.id = et.record_id
+	WHERE public = 1 AND element_id = 49
+	GROUP BY text
+	ORDER BY text ASC
+	";
+	$sql = $select;
+	$q = $db->query($sql);
+	$subjects = $q->fetchAll();
 	return $subjects;
 }
 
@@ -29,15 +25,15 @@ function sb_subjects_list($subjects){
 			$link .= rawurlencode($subject['text']);
 			$link .= htmlentities('&search=&advanced[0][element_id]=49&advanced[0][type]=contains&advanced[0][terms]=');
 			$link .= urlencode(str_replace('&amp;', '&', $subject['text']));
-			echo '<li data-letter="'.$subject['letter'].'" data-count="'.$subject['count'].'"><a href="'.$link.'">'.$subject['text'].' <span class="count">'.$subject['count'].'</span></a></li>';
+			echo '<li data-letter="'.$subject['letter'].'" data-count="'.$subject['total'].'"><a href="'.$link.'">'.$subject['text'].' <span class="count">'.$subject['total'].'</span></a></li>';
 		}
 		echo '</ul>';
 	}
 }
 
 function sb_ascend($a, $b){
-	return $a['count'] - $b['count'];
+	return $a['total'] - $b['total'];
 }
 function sb_descend($a, $b){
-	return $b['count'] - $a['count'];
+	return $b['total'] - $a['total'];
 }
